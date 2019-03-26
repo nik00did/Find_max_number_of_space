@@ -1,0 +1,162 @@
+Turbo Assembler	 Version 3.1	    03/26/19 12:22:40	    Page 1
+lab4.asm
+
+
+
+      1				     ;Раджабли Эльсевер	ПЗ-17-1
+      2				     ;LAB4 Вариант 17 19.02
+      3				     ;Задана строка символов, в	которой	содержатся пробелы.
+      4				     ;Подсчитать наибольшее количество подряд стоящих пробелов.
+      5	0000			     dseg segment
+      6
+      7	0000  20		     space db '	'
+      8	0001  0000		     count_space dw 0
+      9
+     10	0003  11		     maxlen db 17
+     11	0004  ??		     reallen db	?
+     12	0005  11*(24)		     textbuf db	17 dup('$')
+     13
+     14	0016  0A 0D 45 6E 74 65	72+  greeting db 10,13,'Enter the string:', 10,13, '$'
+     15	      20 74 68 65 20 73	74+
+     16	      72 69 6E 67 3A 0A	0D+
+     17	      24
+     18	002C  54 68 65 20 6C 61	72+  result db 'The largest number of consecutive spaces:', 10,13 , '$'
+     19	      67 65 73 74 20 6E	75+
+     20	      6D 62 65 72 20 6F	66+
+     21	      20 63 6F 6E 73 65	63+
+     22	      75 74 69 76 65 20	73+
+     23	      70 61 63 65 73 3A	0A+
+     24	      0D 24
+     25	0058  45 6D 70 74 79 20	6C+  emptyline db 'Empty line!', 10, 13, '$'
+     26	      69 6E 65 21 0A 0D	24
+     27
+     28	0066			     dseg ends
+     29	0000			     cseg segment
+     30					     assume ds:dseg, es:dseg, cs:cseg
+     31	0000			     main proc far
+     32	0000  1E			     push ds
+     33	0001  2B C0			     sub ax, ax
+     34	0003  50			     push ax
+     35	0004  B8 0000s			     mov ax, dseg
+     36	0007  8E D8			     mov ds, ax
+     37	0009  8E C0			     mov es, ax
+     38
+     39	000B  B4 09			     mov ah, 09h
+     40	000D  BA 0016r			     lea dx, greeting
+     41	0010  CD 21			     int 21h
+     42
+     43	0012  B4 0A			     mov ah, 10
+     44	0014  BA 0003r			     lea dx, maxlen
+     45	0017  CD 21			     int 21h
+     46
+     47	0019  80 3E 0004r 00		     cmp reallen, 0
+     48	001E  75 0C			     jne continue
+     49	0020  B4 09			     mov ah, 09h
+     50	0022  BA 0058r			     lea dx, emptyline
+     51	0025  CD 21			     int 21h
+     52	0027  B4 01			     mov ah, 1h
+     53	0029  CD 21			     int 21h
+     54	002B  CB			     ret
+     55
+     56	002C				     continue:
+     57	002C  BE 0005r			     lea si, textbuf
+Turbo Assembler	 Version 3.1	    03/26/19 12:22:40	    Page 2
+lab4.asm
+
+
+
+     58	002F  8A 0E 0004r		     mov cl, reallen
+     59	0033  B5 00			     mov ch, 0
+     60	0035  BB 0000			     mov bx, 0
+     61
+     62	0038  AC			     cycl:   lodsb
+     63	0039  BF 0000r				     lea di, space
+     64	003C  AE				     scasb
+     65	003D  75 04				     jne not_space
+     66	003F  43				     inc bx
+     67	0040  EB 19 90				     jmp go_next
+     68	0043				     not_space:
+     69	0043  83 FB 00				     cmp bx, 0
+     70	0046  74 13				     je	go_next
+     71	0048  3B 1E 0001r			     cmp bx, count_space
+     72	004C  7F 06				     jg	counts
+     73	004E  BB 0000				     mov bx, 0
+     74	0051  EB 08 90				     jmp go_next
+     75	0054				     counts:
+     76	0054  89 1E 0001r			     mov count_space, bx
+     77	0058  BB 0000				     mov bx, 0
+     78	005B				     go_next:
+     79	005B  E2 DB				     loop cycl
+     80	005D  3B 1E 0001r		     cmp bx, count_space
+     81	0061  7F F1			     jg	counts
+     82
+     83	0063  B4 02			     mov ah, 2
+     84	0065  B2 0A			     mov dl, 10
+     85	0067  CD 21			     int 21h
+     86	0069  B2 0D			     mov dl, 13
+     87	006B  CD 21			     int 21h
+     88
+     89	006D  B4 09			     mov ah, 09h
+     90	006F  BA 002Cr			     lea dx, result
+     91	0072  CD 21			     int 21h
+     92
+     93					     ;Convert to string	and output this	string
+     94	0074  A1 0001r			     mov ax, count_space
+     95	0077  B9 0005			     mov cx, 5
+     96	007A  BB 000A			     mov bx, 10
+     97	007D				     convert1:
+     98	007D  BA 0000				     mov dx, 0
+     99	0080  F7 F3				     div bx
+    100	0082  83 C2 30				     add dx, 30h
+    101	0085  52				     push dx
+    102	0086  E2 F5				     loop convert1
+    103	0088  B9 0005			     mov cx, 5
+    104	008B				     convert2:
+    105	008B  5A				     pop dx
+    106	008C  B4 02				     mov ah, 2
+    107	008E  CD 21				     int 21h
+    108	0090  E2 F9				     loop convert2
+    109	0092  B4 01			     mov ah, 1h
+    110	0094  CD 21			     int 21h
+    111	0096  CB			     ret
+    112	0097			     main endp
+    113	0097			     cseg ends
+    114				     end main
+Turbo Assembler	 Version 3.1	    03/26/19 12:22:40	    Page 3
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "03/26/19"
+??FILENAME			  Text	 "lab4	  "
+??TIME				  Text	 "12:22:40"
+??VERSION			  Number 030A
+@CPU				  Text	 0101H
+@CURSEG				  Text	 CSEG
+@FILENAME			  Text	 LAB4
+@WORDSIZE			  Text	 2
+CONTINUE			  Near	 CSEG:002C
+CONVERT1			  Near	 CSEG:007D
+CONVERT2			  Near	 CSEG:008B
+COUNTS				  Near	 CSEG:0054
+COUNT_SPACE			  Word	 DSEG:0001
+CYCL				  Near	 CSEG:0038
+EMPTYLINE			  Byte	 DSEG:0058
+GO_NEXT				  Near	 CSEG:005B
+GREETING			  Byte	 DSEG:0016
+MAIN				  Far	 CSEG:0000
+MAXLEN				  Byte	 DSEG:0003
+NOT_SPACE			  Near	 CSEG:0043
+REALLEN				  Byte	 DSEG:0004
+RESULT				  Byte	 DSEG:002C
+SPACE				  Byte	 DSEG:0000
+TEXTBUF				  Byte	 DSEG:0005
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+CSEG				  16  0097 Para	  none
+DSEG				  16  0066 Para	  none
+
